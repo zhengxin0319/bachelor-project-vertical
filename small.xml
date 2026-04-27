@@ -1,0 +1,135 @@
+<testset xmlns="http://cpee.org/ns/properties/2.0">
+  <executionhandler>ruby</executionhandler>
+  <dataelements/>
+  
+  <endpoints>
+    <timeout>https-post://cpee.org/services/timeout.php</timeout>
+    <settemperature>https-put://cpee.org/dtc/10/environment/temperature</settemperature>
+  </endpoints>
+
+  <attributes>
+    <guarded>none</guarded>
+    <modeltype>CPEE</modeltype>
+    <theme>extended</theme>
+    <guarded_id/>
+    <info>Soil Moisture - Environment Temperature - Small</info>
+    <creator>Generated</creator>
+    <author>Generated</author>
+    <model_uuid>11111111-1111-1111-1111-111111111111</model_uuid>
+    <model_version/>
+    <design_dir>Experiments.dir/Digital Twin Container.dir/CropIrrigation.dir/</design_dir>
+    <design_stage>development</design_stage>
+  </attributes>
+
+  <description>
+    <description xmlns="http://cpee.org/ns/description/1.0">
+
+      <!-- Initialize -->
+      <manipulate id="init" label="Initialize Temperature">
+        <code>
+          data.temperature = 20 unless data.temperature
+          data.start = Time.now.to_i
+        </code>
+      </manipulate>
+
+      <!-- Loop -->
+      <loop mode="post_test" condition="data.duration &lt; data.horizon">
+        <_probability>
+          <_probability_min/>
+          <_probability_max/>
+          <_probability_avg/>
+        </_probability>
+
+        <!-- Wait -->
+        <call id="wait" endpoint="timeout">
+          <parameters>
+            <label>Wait</label>
+            <arguments>
+              <timeout>1</timeout>
+            </arguments>
+          </parameters>
+          <code>
+            <prepare/>
+            <finalize output="result">
+              data.duration = Time.now.to_i - data.start
+            </finalize>
+            <update output="result"/>
+            <rescue output="result"/>
+          </code>
+          <annotations>
+            <_generic/>
+            <_timing>
+              <_timing_weight/>
+              <_timing_avg/>
+              <explanations/>
+            </_timing>
+            <_shifting>
+              <_shifting_type>Duration</_shifting_type>
+            </_shifting>
+            <_context_data_analysis>
+              <probes/>
+              <ips/>
+            </_context_data_analysis>
+            <report><url/></report>
+            <_notes><_notes_general/></_notes>
+          </annotations>
+          <documentation>
+            <input/>
+            <output/>
+            <implementation><description/></implementation>
+            <code><description/></code>
+          </documentation>
+        </call>
+
+        <!-- Compute Temperature -->
+        <manipulate id="compute" label="Adjust Temperature">
+          <code>
+            # simple oscillation logic
+            data.temperature += 1
+            data.temperature = 15 if data.temperature > 30
+          </code>
+        </manipulate>
+
+        <!-- Write Temperature -->
+        <call id="set_temp" endpoint="settemperature">
+          <parameters>
+            <label>Set Temperature</label>
+            <arguments>
+              <float>!data.temperature</float>
+            </arguments>
+          </parameters>
+          <annotations>
+            <_generic/>
+            <_timing>
+              <_timing_weight/>
+              <_timing_avg/>
+              <explanations/>
+            </_timing>
+            <_shifting>
+              <_shifting_type>Duration</_shifting_type>
+            </_shifting>
+            <_context_data_analysis>
+              <probes/>
+              <ips/>
+            </_context_data_analysis>
+            <report><url/></report>
+            <_notes><_notes_general/></_notes>
+          </annotations>
+          <documentation>
+            <input/>
+            <output/>
+            <implementation><description/></implementation>
+          </documentation>
+        </call>
+
+      </loop>
+
+    </description>
+  </description>
+
+  <transformation>
+    <description type="copy"/>
+    <dataelements type="none"/>
+    <endpoints type="none"/>
+  </transformation>
+</testset>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testset xmlns="http://cpee.org/ns/properties/2.0">
+  <executionhandler>ruby</executionhandler>
+
+  <dataelements>
+    <guest_arrived/>
+    <order_done/>
+    <payment_done/>
+  </dataelements>
+
+  <endpoints>
+    <reservation>https-post://cpee.org/services/reservation</reservation>
+    <order>https-post://cpee.org/services/order</order>
+    <payment>https-post://cpee.org/services/payment</payment>
+    <cancel>https-post://cpee.org/services/cancel</cancel>
+  </endpoints>
+
+  <attributes>
+    <modeltype>CPEE</modeltype>
+    <theme>small</theme>
+    <info>Restaurant Reservation Management - 7 Elements</info>
+  </attributes>
+
+  <description>
+    <description xmlns="http://cpee.org/ns/description/1.0">
+
+      <!-- 1 -->
+      <manipulate id="s1" label="Check Reservation">
+        <code>
+          data.guest_arrived = true
+          data.order_done    = false
+          data.payment_done  = false
+        </code>
+      </manipulate>
+
+      <!-- 2 -->
+      <choose id="s_choose" mode="exclusive" label="guest_arrived == true">
+
+        <alternative condition="">
+
+          <!-- 3 -->
+          <call id="s2" endpoint="order">
+            <parameters>
+              <label>Take Order</label>
+              <arguments>
+                <table>reserved table</table>
+              </arguments>
+            </parameters>
+            <code>
+              <prepare/>
+              <finalize output="result">data.order_done = true</finalize>
+              <update output="result"/>
+              <rescue output="result"/>
+            </code>
+          </call>
+
+          <!-- 4 -->
+          <call id="s3" endpoint="payment">
+            <parameters>
+              <label>Process Payment</label>
+              <arguments>
+                <method>card</method>
+              </arguments>
+            </parameters>
+            <code>
+              <prepare/>
+              <finalize output="result">data.payment_done = true</finalize>
+              <update output="result"/>
+              <rescue output="result">data.payment_done = false</rescue>
+            </code>
+          </call>
+
+        </alternative>
+
+        <otherwise>
+
+          <!-- 5 -->
+          <call id="s4" endpoint="cancel">
+            <parameters>
+              <label>Cancel Reservation</label>
+              <arguments>
+                <reason>no show</reason>
+              </arguments>
+            </parameters>
+          </call>
+
+        </otherwise>
+
+      </choose>
+
+      <!-- 6 -->
+      <manipulate id="s5" label="Close Reservation">
+        <code>
+          data.closed = true
+        </code>
+      </manipulate>
+
+    </description>
+  </description>
+
+  <transformation>
+    <description type="copy"/>
+  </transformation>
+</testset>

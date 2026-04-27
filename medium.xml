@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testset xmlns="http://cpee.org/ns/properties/2.0">
+  <executionhandler>ruby</executionhandler>
+
+  <dataelements>
+    <order_confirmed/>
+    <payment_method/>
+    <payment_done/>
+  </dataelements>
+
+  <endpoints>
+    <order>https-post://cafe.example.org/order/place</order>
+    <payment>https-post://cafe.example.org/payment/process</payment>
+  </endpoints>
+
+  <attributes>
+    <modeltype>CPEE</modeltype>
+    <theme>small</theme>
+    <info>Cafe Order and Payment - 9 Elements</info>
+  </attributes>
+
+  <description>
+    <description xmlns="http://cpee.org/ns/description/1.0">
+
+      <!-- 1 -->
+      <manipulate id="a1" label="Start Order">
+        <code>
+          data.order_confirmed = true
+          data.payment_method  = 'card'
+          data.payment_done    = false
+        </code>
+      </manipulate>
+
+      <!-- LOOP: keep adding items until order confirmed -->
+      <loop mode="post_test" condition="data.order_confirmed == false">
+
+        <!-- 2 -->
+        <parallel wait="2" cancel="last">
+
+          <parallel_branch>
+            <call id="a2" endpoint="order">
+              <parameters>
+                <label>Order Food</label>
+                <arguments>
+                  <item>food</item>
+                </arguments>
+              </parameters>
+            </call>
+          </parallel_branch>
+
+          <parallel_branch>
+            <call id="a3" endpoint="order">
+              <parameters>
+                <label>Order Drink</label>
+                <arguments>
+                  <item>drink</item>
+                </arguments>
+              </parameters>
+            </call>
+          </parallel_branch>
+
+        </parallel>
+
+        <!-- 3 -->
+        <manipulate id="a3" label="Confirm Order">
+          <code>data.order_confirmed == false</code>
+        </manipulate>
+
+      </loop>
+
+      <!-- 4 -->
+      <choose id="c1" mode="exclusive" label="payment_method == card">
+        <alternative condition="">
+
+          <!-- 5 -->
+          <call id="a4" endpoint="payment">
+            <parameters>
+              <label>Pay by Card</label>
+              <arguments>
+                <method>card</method>
+              </arguments>
+            </parameters>
+            <code>
+              <prepare/>
+              <finalize output="result">data.payment_done = true</finalize>
+              <update output="result"/>
+              <rescue output="result"/>
+            </code>
+          </call>
+
+        </alternative>
+        <otherwise>
+
+          <!-- 6 -->
+          <call id="a5" endpoint="payment">
+            <parameters>
+              <label>Pay by Cash</label>
+              <arguments>
+                <method>cash</method>
+              </arguments>
+            </parameters>
+            <code>
+              <prepare/>
+              <finalize output="result">data.payment_done = true</finalize>
+              <update output="result"/>
+              <rescue output="result"/>
+            </code>
+          </call>
+
+        </otherwise>
+      </choose>
+
+      <!-- 8 -->
+      <call id="a7" endpoint="payment">
+        <parameters>
+          <label>Print Receipt</label>
+          <arguments>
+            <action>print</action>
+          </arguments>
+        </parameters>
+      </call>
+
+      <!-- 9 -->
+      <manipulate id="a6" label="Close Order">
+        <code>data.payment_done = true</code>
+      </manipulate>
+
+    </description>
+  </description>
+
+  <transformation>
+    <description type="copy"/>
+  </transformation>
+</testset>
