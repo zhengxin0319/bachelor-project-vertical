@@ -3,37 +3,37 @@
   <executionhandler>ruby</executionhandler>
 
   <dataelements>
-    <train_found/>
+    <course_found/>
     <page_exhausted/>
-    <seat_confirmed/>
-    <ticket_class/>
+    <slot_confirmed/>
+    <course_level/>
     <payment_done/>
-    <purchase_complete/>
+    <enrollment_complete/>
     <seats_available/>
     <payment_method/>
-    <price_accepted/>
+    <prereq_passed/>
     <email_checked/>
     <email_logged_in/>
-    <wants_updates/>
-    <update_channel/>
+    <wants_reminders/>
+    <reminder_channel/>
   </dataelements>
 
   <endpoints>
     <timeout>https-post://cpee.org/services/timeout.php</timeout>
-    <search>https-get://station.example.org/trains/search</search>
-    <seat>https-post://station.example.org/seat/select</seat>
-    <payment>https-post://station.example.org/payment/process</payment>
-    <ticket>https-post://station.example.org/ticket/issue</ticket>
-    <notify>https-post://station.example.org/customer/notify</notify>
-    <log>https-post://station.example.org/log</log>
+    <search>https-get://university.example.org/courses/search</search>
+    <slot>https-post://university.example.org/slot/reserve</slot>
+    <payment>https-post://university.example.org/fees/pay</payment>
+    <enrollment>https-post://university.example.org/enrollment/confirm</enrollment>
+    <notify>https-post://university.example.org/student/notify</notify>
+    <log>https-post://university.example.org/log</log>
   </endpoints>
 
   <attributes>
     <modeltype>CPEE</modeltype>
     <theme>extended</theme>
-    <info>Train Station Ticket Purchase - 23 Elements</info>
-    <model_uuid>77777777-7777-7777-7777-777777777777</model_uuid>
-    <design_dir>Workflows.dir/Station.dir/TicketPurchase.dir/</design_dir>
+    <info>University Course Registration - 23 Elements</info>
+    <model_uuid>88888888-8888-8888-8888-888888888888</model_uuid>
+    <design_dir>Workflows.dir/University.dir/CourseRegistration.dir/</design_dir>
     <design_stage>development</design_stage>
   </attributes>
 
@@ -41,23 +41,23 @@
     <description xmlns="http://cpee.org/ns/description/1.0">
 
       <!-- 1 -->
-      <manipulate id="a1" label="Start Purchase">
+      <manipulate id="a1" label="Start Course Registration">
         <code>
-          data.train_found       = false
-          data.page_exhausted    = false
-          data.seat_confirmed    = false
-          data.ticket_class      = 'second'
-          data.payment_done      = false
-          data.purchase_complete = false
-          data.seats_available   = false
-          data.payment_method    = 'card'
-          data.price_accepted    = false
-          data.current_page      = 1
-          data.max_pages         = 3
-          data.email_checked     = false
-          data.email_logged_in   = false
-          data.wants_updates     = true
-          data.update_channel    = 'sms'
+          data.course_found        = false
+          data.page_exhausted      = false
+          data.slot_confirmed      = false
+          data.course_level        = 'undergraduate'
+          data.payment_done        = false
+          data.enrollment_complete = false
+          data.seats_available     = false
+          data.payment_method      = 'online'
+          data.prereq_passed       = false
+          data.current_page        = 1
+          data.max_pages           = 3
+          data.email_checked       = false
+          data.email_logged_in     = false
+          data.wants_reminders     = true
+          data.reminder_channel    = 'sms'
         </code>
       </manipulate>
 
@@ -71,25 +71,25 @@
         </parameters>
       </call>
 
-      <!-- LOOP 1 (outer): entire purchase, retry if abandoned -->
-      <loop mode="post_test" condition="data.purchase_complete == false">
+      <!-- LOOP 1 (outer): entire registration, retry if incomplete -->
+      <loop mode="post_test" condition="data.enrollment_complete == false">
 
-        <!-- LOOP 2 (mid): search trains until one is found -->
-        <loop mode="post_test" condition="data.train_found == false">
+        <!-- LOOP 2 (mid): search courses until one is found -->
+        <loop mode="post_test" condition="data.course_found == false">
 
           <!-- 3 -->
           <call id="a3" endpoint="search">
             <parameters>
-              <label>Choose the city you want to go to</label>
+              <label>Select course name</label>
               <arguments>
-                <route>any destination</route>
-                <date>today</date>
+                <subject>any department</subject>
+                <semester>current</semester>
               </arguments>
             </parameters>
           </call>
 
-          <!-- LOOP 3 (inner): page through results until train found -->
-          <loop mode="post_test" condition="data.train_found == false &amp;&amp; data.page_exhausted == false">
+          <!-- LOOP 3 (inner): page through results until course found -->
+          <loop mode="post_test" condition="data.course_found == false &amp;&amp; data.page_exhausted == false">
 
             <!-- 4 -->
             <call id="a4" endpoint="search">
@@ -108,16 +108,16 @@
             </call>
 
             <!-- 5 -->
-            <choose id="c1" mode="exclusive" label="Type the city name">
+            <choose id="c1" mode="exclusive" label="Select Course">
               <alternative condition="seats_available == true">
                 <!-- 6 -->
-                <manipulate id="a5" label="Select Train">
-                  <code>data.train_found = true</code>
+                <manipulate id="a5" label="Select Course">
+                  <code>data.course_found = true</code>
                 </manipulate>
               </alternative>
               <otherwise>
                 <!-- 7 -->
-                <manipulate id="a6" label="Look for other trains">
+                <manipulate id="a6" label="Reselect Courses">
                   <code>
                     data.current_page += 1
                     data.page_exhausted = data.current_page > data.max_pages
@@ -130,12 +130,12 @@
           <!-- end LOOP 3 -->
 
           <!-- 8 -->
-          <choose id="c2" mode="exclusive" label="train_found == false">
-            <alternative condition="">
+          <choose id="c2" mode="exclusive" label="Found the Course?">
+            <alternative condition="course_found == false">
               <!-- 9 -->
               <call id="a7" endpoint="notify">
                 <parameters>
-                  <label>Notify: No Trains Found</label>
+                  <label>Notify No Courses Found</label>
                   <arguments>
                     <reason>all pages exhausted</reason>
                   </arguments>
@@ -153,7 +153,7 @@
               <!-- 11 -->
               <call id="a9" endpoint="notify">
                 <parameters>
-                  <label>Show Train Details</label>
+                  <label>Show Course Details</label>
                   <arguments>
                     <action>display</action>
                   </arguments>
@@ -165,29 +165,29 @@
         </loop>
         <!-- end LOOP 2 -->
 
-        <!-- LOOP 4: select and confirm seat -->
-        <loop mode="post_test" condition="data.seat_confirmed == false">
+        <!-- LOOP 4: check prerequisites and confirm slot -->
+        <loop mode="post_test" condition="data.slot_confirmed == false">
 
           <!-- 12 -->
-          <choose id="c3" mode="exclusive" label="Choose Seat Class">
-            <alternative condition="ticket_class == first">
+          <choose id="c3" mode="exclusive" label="Choose Course Level">
+            <alternative condition="course_level == master">
               <!-- 13 -->
-              <call id="a10" endpoint="seat">
+              <call id="a10" endpoint="slot">
                 <parameters>
-                  <label>Select First Class Seat</label>
+                  <label>Reserve Master Slot</label>
                   <arguments>
-                    <class>first</class>
+                    <level>master</level>
                   </arguments>
                 </parameters>
               </call>
             </alternative>
             <otherwise>
               <!-- 14 -->
-              <call id="a11" endpoint="seat">
+              <call id="a11" endpoint="slot">
                 <parameters>
-                  <label>Select Second Class Seat</label>
+                  <label>Reserve Undergraduate Slot</label>
                   <arguments>
-                    <class>second</class>
+                    <level>undergraduate</level>
                   </arguments>
                 </parameters>
               </call>
@@ -195,16 +195,16 @@
           </choose>
 
           <!-- 15 -->
-          <call id="a12" endpoint="seat">
+          <call id="a12" endpoint="slot">
             <parameters>
-              <label>Confirm Seat</label>
+              <label>Confirm Slot</label>
               <arguments>
                 <action>confirm</action>
               </arguments>
             </parameters>
             <code>
               <prepare/>
-              <finalize output="result">data.seat_confirmed = result['confirmed'] rescue true</finalize>
+              <finalize output="result">data.slot_confirmed = result['confirmed'] rescue true</finalize>
               <update output="result"/>
               <rescue output="result"/>
             </code>
@@ -216,14 +216,14 @@
         <!-- 16 -->
         <call id="a13" endpoint="notify">
           <parameters>
-            <label>Show Price Summary</label>
+            <label>Show Fee Summary</label>
             <arguments>
-              <class>!data.ticket_class</class>
+              <level>!data.course_level</level>
             </arguments>
           </parameters>
           <code>
             <prepare/>
-            <finalize output="result">data.price_accepted = result['accepted'] rescue true</finalize>
+            <finalize output="result">data.prereq_passed = result['accepted'] rescue true</finalize>
             <update output="result"/>
             <rescue output="result"/>
           </code>
@@ -233,14 +233,14 @@
         <loop mode="post_test" condition="data.payment_done == false">
 
           <!-- 17 -->
-          <choose id="c4" mode="exclusive" label="Chooese Payment Way">
-            <alternative condition="payment_method == card">
+          <choose id="c4" mode="exclusive" label="Choose your Payment Method">
+            <alternative condition="data.payment_method == 'online'">
               <!-- 18 -->
               <call id="a14" endpoint="payment">
                 <parameters>
-                  <label>Pay by Card</label>
+                  <label>Pay Online</label>
                   <arguments>
-                    <method>card</method>
+                    <method>online</method>
                   </arguments>
                 </parameters>
                 <code>
@@ -255,9 +255,9 @@
               <!-- 19 -->
               <call id="a15" endpoint="payment">
                 <parameters>
-                  <label>Pay by Cash</label>
+                  <label>Pay at Cashier</label>
                   <arguments>
-                    <method>cash</method>
+                    <method>cashier</method>
                   </arguments>
                 </parameters>
                 <code>
@@ -273,7 +273,7 @@
           <!-- 20 -->
           <manipulate id="a16" label="Check Payment Result">
             <code>
-              data.purchase_complete = data.payment_done
+              data.enrollment_complete = data.payment_done
             </code>
           </manipulate>
 
@@ -284,16 +284,16 @@
       <!-- end LOOP 1 -->
 
       <!-- 21 -->
-      <call id="a17" endpoint="ticket">
+      <call id="a17" endpoint="enrollment">
         <parameters>
-          <label>Print Ticket</label>
+          <label>Print Enrollment Confirmation</label>
           <arguments>
             <format>paper</format>
           </arguments>
         </parameters>
       </call>
 
-      <!-- LOOP 6: check email login, send digital ticket only if logged in -->
+      <!-- LOOP 6: check email login, send digital confirmation only if logged in -->
       <loop mode="post_test" condition="data.email_checked == false">
 
         <!-- 22 -->
@@ -321,12 +321,12 @@
       <!-- end LOOP 6 -->
 
       <!-- 24 -->
-      <choose id="c5" mode="exclusive" label="Log in your Email">
+      <choose id="c5" mode="exclusive" label="Login your Email? ">
         <alternative condition="email_logged_in == true">
 
-          <call id="a21" endpoint="ticket">
+          <call id="a21" endpoint="enrollment">
             <parameters>
-              <label>Send Digital Ticket</label>
+              <label>Send Digital Confirmation</label>
               <arguments>
                 <format>email</format>
               </arguments>
@@ -334,15 +334,15 @@
           </call>
 
           <!-- 25 (nested inside email logged in) -->
-          <choose id="c6" mode="exclusive" label="wants_updates == true">
-            <alternative condition="">
+          <choose id="c6" mode="exclusive" label="Want Reminders?">
+            <alternative condition="wants_reminders == true">
 
               <!-- 26 -->
-              <choose id="c7" mode="exclusive" label="Subscribe Updates">
-                <alternative condition="update_channel == sms">
+              <choose id="c7" mode="exclusive" label="Choose Reminder Type">
+                <alternative condition="data.reminder_channel == 'sms'">
                   <call id="a23" endpoint="notify">
                     <parameters>
-                      <label>Subscribe SMS Updates</label>
+                      <label>Subscribe SMS Reminders</label>
                       <arguments>
                         <channel>sms</channel>
                       </arguments>
@@ -352,7 +352,7 @@
                 <otherwise>
                   <call id="a24" endpoint="notify">
                     <parameters>
-                      <label>Subscribe Email Updates</label>
+                      <label>Subscribe Email Reminders</label>
                       <arguments>
                         <channel>email</channel>
                       </arguments>
@@ -363,15 +363,15 @@
 
             </alternative>
             <otherwise>
-              <manipulate id="a25" label="Skip Updates">
-                <code>data.updates_skipped = true</code>
+              <manipulate id="a25" label="Skip Reminders">
+                <code>data.reminders_skipped = true</code>
               </manipulate>
             </otherwise>
           </choose>
 
         </alternative>
         <otherwise>
-          <manipulate id="a22" label="Skip Digital Ticket">
+          <manipulate id="a22" label="Skip Digital Confirmation">
             <code>data.email_skipped = true</code>
           </manipulate>
         </otherwise>
@@ -383,7 +383,7 @@
           <label>Log Transaction</label>
           <arguments>
             <status>completed</status>
-            <class>!data.ticket_class</class>
+            <level>!data.course_level</level>
             <method>!data.payment_method</method>
           </arguments>
         </parameters>
